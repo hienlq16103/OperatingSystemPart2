@@ -88,7 +88,7 @@ int vmap_page_range(struct pcb_t *caller, // process call
   //uint32_t * pte = malloc(sizeof(uint32_t));
   struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
   //int  fpn;
-  int pgit = 0;
+  int pgit = 0; // iterator for pagenumber
   int pgn = PAGING_PGN(addr);
 
   ret_rg->rg_end = ret_rg->rg_start = addr; // at least the very first space is usable
@@ -100,6 +100,15 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      in page table caller->mm->pgd[]
    */
 
+  for (pgit = addr; pgit < addr + pgnum*PAGING_PAGESZ; pgit += PAGING_PAGESZ)
+  {
+	fpit = fpit->fp_next;
+	pgn = PAGING_PGN(pgit); // get page number
+	caller->mm->pgd[pgn] = PAGING_FPN(fpit->fpn); // Insert entries to the page table
+						      // page number -> frame number
+  }
+
+  pgn = PAGING_PGN(addr); pgit = pgnum; // is this line of code correct? god knows...
    /* Tracking for later page replacement activities (if needed)
     * Enqueue new usage page */
    enlist_pgn_node(&caller->mm->fifo_pgn, pgn+pgit);
