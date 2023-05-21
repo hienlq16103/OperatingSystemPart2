@@ -450,15 +450,19 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
 	if (pg == NULL){
 		return 0;
 	}
-	struct pgn_t *previousPage = pg;
+	if (pg->pg_next == NULL){
+		*retpgn = pg->pgn;
+		mm->fifo_pgn = NULL;
+		free(pg);
+		return 0;
+	}
+	struct pgn_t *previousPage;
 	while (pg->pg_next != NULL){
 		previousPage = pg;
 		pg = pg->pg_next;
 	}	
 	*retpgn = pg->pgn;
 	previousPage->pg_next = NULL;
-	pg = NULL;
-	free(previousPage);	
   free(pg);
 
   return 0;
