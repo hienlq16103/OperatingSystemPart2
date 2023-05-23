@@ -451,7 +451,22 @@ int find_victim_page(struct mm_struct *mm, int *retpgn)
   struct pgn_t *pg = mm->fifo_pgn;
 
   /* TODO: Implement the theorical mechanism to find the victim page */
-
+	if (pg == NULL){
+		return 0;
+	}
+	if (pg->pg_next == NULL){
+		*retpgn = pg->pgn;
+		mm->fifo_pgn = NULL;
+		free(pg);
+		return 0;
+	}
+	struct pgn_t *previousPage;
+	while (pg->pg_next != NULL){
+		previousPage = pg;
+		pg = pg->pg_next;
+	}	
+	*retpgn = pg->pgn;
+	previousPage->pg_next = NULL;
   free(pg);
 
   return 0;

@@ -86,14 +86,14 @@ int vmap_page_range(struct pcb_t *caller, // process call
               struct vm_rg_struct *ret_rg)// return mapped region, the real mapped fp
 {                                         // no guarantee all given pages are mapped
   //uint32_t * pte = malloc(sizeof(uint32_t));
-  struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
+  //struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
   //int  fpn;
   int pgit = 0; // iterator for pagenumber
   int pgn = PAGING_PGN(addr);
 
   ret_rg->rg_end = ret_rg->rg_start = addr; // at least the very first space is usable
 
-  fpit->fp_next = frames;
+  struct framephy_struct *fpit = frames;
 
   /* TODO map range of frame to address space 
    *      [addr to addr + pgnum*PAGING_PAGESZ
@@ -102,16 +102,18 @@ int vmap_page_range(struct pcb_t *caller, // process call
 
   for (pgit = addr; pgit < addr + pgnum*PAGING_PAGESZ; pgit += PAGING_PAGESZ)
   {
-	fpit = fpit->fp_next;
 	pgn = PAGING_PGN(pgit); // get page number
 	caller->mm->pgd[pgn] = PAGING_FPN(fpit->fpn); // Insert entries to the page table
-						      // page number -> frame number
+
+	// page number -> frame number
+	fpit = fpit->fp_next;
+	printf("1");
+	if (fpit == NULL) break;
   }
 
-  pgn = PAGING_PGN(addr); pgit = pgnum; // is this line of code correct? god knows...
    /* Tracking for later page replacement activities (if needed)
     * Enqueue new usage page */
-   enlist_pgn_node(&caller->mm->fifo_pgn, pgn+pgit);
+   enlist_pgn_node(&caller->mm->fifo_pgn, pgnum);
 
 
   return 0;
