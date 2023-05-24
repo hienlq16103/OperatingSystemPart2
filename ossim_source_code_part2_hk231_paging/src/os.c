@@ -47,15 +47,24 @@ static void * cpu_routine(void * args) {
 	int id = ((struct cpu_args*)args)->id;
 	/* Check for new process in ready queue */
 	int time_left = 0;
+	int time_null_proc = 0;	//PvD: count time slots that process continuously is NULL
 	struct pcb_t * proc = NULL;
 	while (1) {
+		if (proc != NULL)
+		{
+			time_null_proc = 0;
+		}
 		/* Check the status of current process */
 		if (proc == NULL) {
 			/* No process is running, the we load new process from
 		 	* ready queue */
 			proc = get_proc();
 			if (proc == NULL) {
+			   ++time_null_proc; //PvD: add null proc timer 
                            next_slot(timer_id);
+			   /*PvD: proc has been a NULL for too long, stop*/
+			   if (time_null_proc > time_slot*5 + 100)
+				   break;
                            continue; /* First load failed. skip dummy load */
                         }
 		}else if (proc->pc == proc->code->size) {
