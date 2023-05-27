@@ -88,9 +88,8 @@ int vmap_page_range(struct pcb_t *caller, // process call
   //uint32_t * pte = malloc(sizeof(uint32_t));
   //struct framephy_struct *fpit = malloc(sizeof(struct framephy_struct));
   //int  fpn;
-  int pgit = 0; // iterator for pagenumber
-  int pgn = PAGING_PGN(addr);
-
+  
+  int pgit;
   ret_rg->rg_end = ret_rg->rg_start = addr; // at least the very first space is usable
 
   struct framephy_struct *fpit = frames;
@@ -99,21 +98,23 @@ int vmap_page_range(struct pcb_t *caller, // process call
    *      [addr to addr + pgnum*PAGING_PAGESZ
    *      in page table caller->mm->pgd[]
    */
-
-  for (pgit = addr; pgit < addr + pgnum*PAGING_PAGESZ; pgit += PAGING_PAGESZ)
+//printf("addr: %d, %d, %d\n",addr, PAGING_PGN(addr), PAGING_MAX_PGN);
+  addr = PAGING_PGN(addr);
+  for(pgit = addr; pgit < addr + pgnum; pgit++)
   {
-	pgn = PAGING_PGN(pgit); // get page number
-	caller->mm->pgd[pgn] = PAGING_FPN(fpit->fpn); // Insert entries to the page table
 
-	// page number -> frame number
-	fpit = fpit->fp_next;
-	printf("1");
-	if (fpit == NULL) break;
-  }
+    pte_set_fpn(&caller->mm->pgd[pgit], fpit->fpn);
+    fpit = fpit->fp_next;
 
    /* Tracking for later page replacement activities (if needed)
     * Enqueue new usage page */
-   enlist_pgn_node(&caller->mm->fifo_pgn, pgnum);
+    enlist_pgn_node(&caller->mm->fifo_pgn, pgit);
+	//printf("FPIT_FPN: %d, PAGING_FPN: %d\n", fpit->fpn, PAGING_FPN(fpit->fpn));
+	// page number -> frame number
+	//printf("1");
+	if (fpit == NULL) break;
+  }
+
 
 
   return 0;
