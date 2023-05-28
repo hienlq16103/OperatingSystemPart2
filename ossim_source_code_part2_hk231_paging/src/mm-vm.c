@@ -148,7 +148,9 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   rgnode = get_symrg_byid(caller->mm, rgid);
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, rgnode);
-  printf("freed address %ld to %ld at register %d\n", rgnode->rg_start, rgnode->rg_end, rgid);
+  if (caller->mm->symrgtbl[rgid].rg_end != 0)
+  printf("Freed address %ld to %ld at register %d\n\n", rgnode->rg_start, rgnode->rg_end, rgid);
+  caller->mm->symrgtbl[rgid].rg_end = caller->mm->symrgtbl[rgid].rg_start = 0;
   return 0;
 }
 
@@ -163,7 +165,7 @@ int pgalloc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
 
   /* By default using vmaid = 0 */
   __alloc(proc, 0, reg_index, size, &addr);
-  printf("allocated address %d at register %d.\n", addr, reg_index);
+  printf("Allocated address %d at register %d.\n\n", addr, reg_index);
   return 0;
 }
 
