@@ -18,9 +18,23 @@ int enlist_vm_freerg_list(struct mm_struct *mm, struct vm_rg_struct *rg_elmt)
 {
   struct vm_rg_struct *rg_node = mm->mmap->vm_freerg_list;
 
-  if (rg_elmt->rg_start >= rg_elmt->rg_end)
+  if (rg_elmt->rg_start > rg_elmt->rg_end)
     return -1;
 
+  while (rg_node != NULL)
+  {
+    if (rg_node->rg_start == rg_elmt->rg_end)
+    {
+     rg_node->rg_start = rg_elmt->rg_start;
+      return 0;
+    }
+    else if (rg_node->rg_end == rg_elmt->rg_start)
+    {
+      rg_node->rg_end = rg_elmt->rg_end;
+      return 0;
+    }
+    rg_node = rg_node->rg_next;
+  }
   if (rg_node != NULL)
     rg_elmt->rg_next = rg_node;
 
@@ -112,6 +126,7 @@ int __alloc(struct pcb_t *caller, int vmaid, int rgid, int size, int *alloc_addr
 
   *alloc_addr = old_sbrk;
   cur_vma->sbrk = old_sbrk + size;
+
   return 0;
 }
 
@@ -133,7 +148,7 @@ int __free(struct pcb_t *caller, int vmaid, int rgid)
   rgnode = get_symrg_byid(caller->mm, rgid);
   /*enlist the obsoleted memory region */
   enlist_vm_freerg_list(caller->mm, rgnode);
-
+  printf("freed address %ld to %ld at register %d\n", rgnode->rg_start, rgnode->rg_end, rgid);
   return 0;
 }
 
@@ -147,7 +162,9 @@ int pgalloc(struct pcb_t *proc, uint32_t size, uint32_t reg_index)
   int addr;
 
   /* By default using vmaid = 0 */
-  return __alloc(proc, 0, reg_index, size, &addr);
+  __alloc(proc, 0, reg_index, size, &addr);
+  printf("allocated address %d at register %d.\n", addr, reg_index);
+  return 0;
 }
 
 /*pgfree - PAGING-based free a region memory
